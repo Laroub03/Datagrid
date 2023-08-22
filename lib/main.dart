@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '/datagrid/lib/image_data.dart';
+import 'image_data.dart'; // Importing the ImageData class from a separate file
 
 void main() {
   runApp(MyApp());
@@ -24,8 +24,9 @@ class ImageGallery extends StatefulWidget {
 }
 
 class _ImageGalleryState extends State<ImageGallery> {
-  List<ImageData> _imageDataList = [];
+  List<ImageData> _imageDataList = []; // List to store image data
 
+  // Function to pick an image from the device's gallery
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedImage = await picker.pickImage(source: ImageSource.gallery);
@@ -37,6 +38,7 @@ class _ImageGalleryState extends State<ImageGallery> {
     }
   }
 
+  // Function to show a dialog for entering image information
   Future<void> _showImageDialog(File image) async {
     TextEditingController nameController = TextEditingController();
     String selectedType = '.jpg';
@@ -52,7 +54,7 @@ class _ImageGalleryState extends State<ImageGallery> {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Image.file(image, height: 100),
+                  Image.file(image, height: 100), // Display the selected image
                   TextField(
                     controller: nameController,
                     decoration: InputDecoration(labelText: 'Image Name'),
@@ -92,7 +94,7 @@ class _ImageGalleryState extends State<ImageGallery> {
                     );
 
                     setState(() {
-                      _imageDataList.add(imageData);
+                      _imageDataList.add(imageData); // Add image data to the list
                     });
 
                     Navigator.of(context).pop();
@@ -107,6 +109,7 @@ class _ImageGalleryState extends State<ImageGallery> {
     );
   }
 
+  // Function to show a dialog with image information
   Future<void> _showImageDataDialog(ImageData imageData) async {
     showDialog(
       context: context,
@@ -121,7 +124,7 @@ class _ImageGalleryState extends State<ImageGallery> {
                   Navigator.of(context).pop();
                   _showOriginalImageDialog(imageData.image);
                 },
-                child: Image.file(imageData.image, height: 100),
+                child: Image.file(imageData.image, height: 100), // Display the thumbnail
               ),
               Text('Name: ${imageData.name}'),
               Text('Type: ${imageData.type}'),
@@ -141,12 +144,13 @@ class _ImageGalleryState extends State<ImageGallery> {
     );
   }
 
+  // Function to show a dialog with the original-size image
   Future<void> _showOriginalImageDialog(File image) async {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          content: Image.file(image),
+          content: Image.file(image), // Display the original-size image
           actions: [
             TextButton(
               onPressed: () {
@@ -160,6 +164,7 @@ class _ImageGalleryState extends State<ImageGallery> {
     );
   }
 
+  // Function to build the datagrid of image thumbnails
   Widget _buildImageDataGrid() {
     return GridView.builder(
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -169,9 +174,9 @@ class _ImageGalleryState extends State<ImageGallery> {
       itemBuilder: (BuildContext context, int index) {
         return GestureDetector(
           onTap: () {
-            _showImageDataDialog(_imageDataList[index]);
+            _showImageDataDialog(_imageDataList[index]); // Show image information dialog
           },
-          child: Image.file(_imageDataList[index].image),
+          child: Image.file(_imageDataList[index].image), // Display image thumbnail
         );
       },
     );
@@ -183,7 +188,7 @@ class _ImageGalleryState extends State<ImageGallery> {
       appBar: AppBar(
         title: Text('Image Gallery'),
       ),
-      body: _buildImageDataGrid(),
+      body: _buildImageDataGrid(), // Display the image datagrid
       floatingActionButton: FloatingActionButton(
         onPressed: _pickImage,
         child: Icon(Icons.add),
