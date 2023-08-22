@@ -1,6 +1,6 @@
 {
-    "name": "datagrid_",
-    "short_name": "datagrid_",
+    "name": "datagrid",
+    "short_name": "datagrid",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

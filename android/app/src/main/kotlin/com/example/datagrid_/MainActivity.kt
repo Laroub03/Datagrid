@@ -1,4 +1,4 @@
-package com.example.datagrid_
+package com.example.datagrid
 
 import io.flutter.embedding.android.FlutterActivity
 
