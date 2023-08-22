@@ -24,9 +24,10 @@ class ImageGallery extends StatefulWidget {
 }
 
 class _ImageGalleryState extends State<ImageGallery> {
-  List<ImageData> _imageDataList = []; // List to store image data
+  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
+  List<ImageData> _imageDataList = [];
 
-  // Function to pick an image from the device's gallery
+  // Function to pick an image from the gallery
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedImage = await picker.pickImage(source: ImageSource.gallery);
@@ -38,13 +39,14 @@ class _ImageGalleryState extends State<ImageGallery> {
     }
   }
 
-  // Function to show a dialog for entering image information
+  // Function to show the dialog for adding image information
   Future<void> _showImageDialog(File image) async {
+    // Controllers for capturing user input
     TextEditingController nameController = TextEditingController();
     String selectedType = '.jpg';
     TextEditingController sizeController = TextEditingController();
 
-    showDialog(
+    await showDialog(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
@@ -54,11 +56,19 @@ class _ImageGalleryState extends State<ImageGallery> {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Image.file(image, height: 100), // Display the selected image
+                  // Display the selected image
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.file(image, height: 100),
+                    ],
+                  ),
+                  // Text field for capturing image name
                   TextField(
                     controller: nameController,
                     decoration: InputDecoration(labelText: 'Image Name'),
                   ),
+                  // Dropdown for selecting image type
                   DropdownButtonFormField<String>(
                     value: selectedType,
                     onChanged: (newValue) {
@@ -77,6 +87,7 @@ class _ImageGalleryState extends State<ImageGallery> {
                     ).toList(),
                     decoration: InputDecoration(labelText: 'Image Type'),
                   ),
+                  // Text field for capturing image size
                   TextField(
                     controller: sizeController,
                     decoration: InputDecoration(labelText: 'Image Size'),
@@ -84,8 +95,9 @@ class _ImageGalleryState extends State<ImageGallery> {
                 ],
               ),
               actions: [
+                // Save image information and update the list
                 TextButton(
-                  onPressed: () {
+                  onPressed: () async {
                     ImageData imageData = ImageData(
                       image: image,
                       name: nameController.text,
@@ -93,11 +105,16 @@ class _ImageGalleryState extends State<ImageGallery> {
                       size: sizeController.text,
                     );
 
+                    // Close the dialog
+                    Navigator.of(context).pop();
+
+                    // Update the image list
                     setState(() {
-                      _imageDataList.add(imageData); // Add image data to the list
+                      _imageDataList.insert(0, imageData);
                     });
 
-                    Navigator.of(context).pop();
+                    // Insert the item at the beginning of the animated list
+                    _listKey.currentState?.insertItem(0);
                   },
                   child: Text('Save Image Information'),
                 ),
@@ -109,7 +126,7 @@ class _ImageGalleryState extends State<ImageGallery> {
     );
   }
 
-  // Function to show a dialog with image information
+  // Function to show the dialog with detailed image information
   Future<void> _showImageDataDialog(ImageData imageData) async {
     showDialog(
       context: context,
@@ -119,13 +136,15 @@ class _ImageGalleryState extends State<ImageGallery> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Display the image with an option to view full-size
               GestureDetector(
                 onTap: () {
                   Navigator.of(context).pop();
                   _showOriginalImageDialog(imageData.image);
                 },
-                child: Image.file(imageData.image, height: 100), // Display the thumbnail
+                child: Image.file(imageData.image, height: 100),
               ),
+              // Display image name, type, and size
               Text('Name: ${imageData.name}'),
               Text('Type: ${imageData.type}'),
               Text('Size: ${imageData.size}'),
@@ -144,13 +163,13 @@ class _ImageGalleryState extends State<ImageGallery> {
     );
   }
 
-  // Function to show a dialog with the original-size image
+  // Function to show the dialog with the original image
   Future<void> _showOriginalImageDialog(File image) async {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          content: Image.file(image), // Display the original-size image
+          content: Image.file(image),
           actions: [
             TextButton(
               onPressed: () {
@@ -164,21 +183,55 @@ class _ImageGalleryState extends State<ImageGallery> {
     );
   }
 
-  // Function to build the datagrid of image thumbnails
-  Widget _buildImageDataGrid() {
-    return GridView.builder(
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-      ),
-      itemCount: _imageDataList.length,
-      itemBuilder: (BuildContext context, int index) {
-        return GestureDetector(
-          onTap: () {
-            _showImageDataDialog(_imageDataList[index]); // Show image information dialog
-          },
-          child: Image.file(_imageDataList[index].image), // Display image thumbnail
-        );
+  // Function to build the animated list of images
+  Widget _buildImageList() {
+    return AnimatedList(
+      key: _listKey,
+      initialItemCount: _imageDataList.length,
+      itemBuilder: (BuildContext context, int index, Animation<double> animation) {
+        return _buildImageListItem(_imageDataList[index], animation, index);
       },
+    );
+  }
+
+  // Function to build an individual item in the animated list
+  Widget _buildImageListItem(ImageData imageData, Animation<double> animation, int index) {
+    return SizeTransition(
+      sizeFactor: animation,
+      child: GestureDetector(
+        onTap: () {
+          _showImageDataDialog(imageData);
+        },
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  // Display image information
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Name: ${imageData.name}'),
+                        Text('Type: ${imageData.type}'),
+                        Text('Size: ${imageData.size}'),
+                      ],
+                    ),
+                  ),
+                  // Display thumbnail of the image
+                  Expanded(
+                    flex: 1,
+                    child: Image.file(imageData.image, height: 50),
+                  ),
+                ],
+              ),
+            ),
+            Divider(),
+          ],
+        ),
+      ),
     );
   }
 
@@ -188,7 +241,7 @@ class _ImageGalleryState extends State<ImageGallery> {
       appBar: AppBar(
         title: Text('Image Gallery'),
       ),
-      body: _buildImageDataGrid(), // Display the image datagrid
+      body: _buildImageList(),
       floatingActionButton: FloatingActionButton(
         onPressed: _pickImage,
         child: Icon(Icons.add),
