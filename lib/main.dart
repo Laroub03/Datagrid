@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 
 void main() {
+  HttpOverrides.global = MyHttpOverrides();
   runApp(MyApp());
 }
 
@@ -32,6 +33,16 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+  }
+}
+
+
+
 class ImageUploadScreen extends StatefulWidget {
   @override
   _ImageUploadScreenState createState() => _ImageUploadScreenState();
@@ -52,26 +63,39 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
     }
   }
 
-  Future<void> _uploadImage() async {
-    if (_image == null) return;
+Future<void> _uploadImage() async {
+  if (_image == null) return;
 
-    List<int> bytes = await _image.readAsBytes();
-    String base64Image = base64Encode(bytes);
+  List<int> bytes = await _image.readAsBytes();
+  String base64Image = base64Encode(bytes);
+
+  try {
     final response = await http.post(
-      Uri.parse('https://192.168.39.114:7080/swagger/index.html'),
+      Uri.parse('https://10.0.2.2:7080/api/images'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'base64Data': base64Image}),
+      body: jsonEncode({
+        'base64Data': base64Image,
+        'type': 'image/jpeg'
+      }),
     );
+
+    print('Response status code: ${response.statusCode}');
+    print('Response body: ${response.body}');
 
     if (response.statusCode == 201) {
       print('Image uploaded successfully');
     } else {
       print('Failed to upload image');
     }
+  } catch (e) {
+    print('Error uploading image: $e');
   }
+}
+
+
 
   Future<void> _fetchImages() async {
-    final response = await http.get(Uri.parse('https://192.168.39.114:7080/swagger/index.html'));
+    final response = await http.get(Uri.parse('https://10.0.2.2:7080/api/images'));
 
     if (response.statusCode == 200) {
       final List<dynamic> responseData = jsonDecode(response.body);
